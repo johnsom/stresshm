@@ -95,6 +95,9 @@ health_manager_opts = [
     cfg.IntOpt('heartbeat_interval',
                default=10,
                help=_('Sleep time between sending heartbeats.')),
+    cfg.IntOpt('heartbeat_version', default=1,
+                help='When set, the heartbeat message will be sent '
+                     'using this version.')
 ]
 
 cfg.CONF.register_opts(health_manager_opts, group='health_manager')
@@ -459,7 +462,12 @@ def cleanup_db(session_maker, prefix):
 
 def build_heartbeat_msg(amp_id, lb, seq):
 
-    msg = {'id': amp_id, 'seq': seq, 'listeners': {}}
+    msg = None
+    if CONF.health_manager.heartbeat_version:
+        msg = {'id': amp_id, 'seq': seq,
+               'ver': CONF.health_manager.heartbeat_version, 'listeners': {}}
+    else:
+        msg = {'id': amp_id, 'seq': seq, 'listeners': {}}
 
     for listener in lb['listeners']:
 
@@ -536,4 +544,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
